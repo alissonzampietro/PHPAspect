@@ -2,11 +2,23 @@
 
 require_once("vendor/autoload.php");
 
-use PDO;
+use Aspecto\Aspect\ApplicationAspectKernel;
 use Aspecto\Model\Contato;
+use Aspecto\Repository\ConnectionFactory;
 use Aspecto\Repository\ContatoRepository;
 
-$conn = new PDO("mysql:host=localhost;dbname=contatos_goaop", "root", "123456");
+$applicationAspectKernel = ApplicationAspectKernel::getInstance();
+$applicationAspectKernel->init(array(
+        'debug' => true, // use 'false' for production mode
+        // Cache directory
+        'cacheDir'  => __DIR__ . 'tmp/',
+        // Include paths restricts the directories where aspects should be applied, or empty for all source files
+        'includePaths' => array(
+            __DIR__ . '/src/'
+        )
+));
+
+$conn = ConnectionFactory::getConnection();
 $repository = new ContatoRepository($conn);
 
 $contato = new Contato();

@@ -14,11 +14,12 @@ class ContatoRepository {
 	}
 
 	public function persist(Contato $contato) {
-		$this->conn->beginTransaction();
-		$stmt = $this->conn->prepare("INSERT INTO contato (nome) VALUES (:nome)");
-		$stmt->bindParam(":nome", 'teste');
+		$sql = "INSERT INTO contatos (nome) VALUES (:nome)";
+		$nomeContato = $contato->getNome();
+
+		$stmt = $this->conn->prepare($sql);
+		$stmt->bindParam(":nome", $nomeContato, PDO::PARAM_STR);
 		$stmt->execute();
-		$this->conn->commit();
 	}
 
 }
