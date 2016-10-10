@@ -105,4 +105,73 @@ Agora vamos verificar se o roteamento está funcionando corretamente. A partir d
 ```
 $ php -sS localhost:8080
 ```
-Acesse o endereço http://localhost:8080/contatos/ e verifique se o nosso **ok!** foi impresso na tela.
+Acesse o endereço http://localhost:8080/contatos/ e verifique se o nosso **ok!** foi impresso na tela. Com o nosso controlador atendendo as requisições, vamos criar o nosso primeiro aspecto, que será responsável por verificar se o usuário tem ou não permissão para acessar o sistema. Para isso, precisamos entender o que são *pointcuts* e como eles funcionam. 
+
+### Advice
+
+Os *Advices* determinam em que momento, durante a execução de um método, o aspecto será invocado. O Go! Aop nos permite fazer isso através de *annotations*. São elas: @Before, @After, @AfterThrowing e @Around. 
+
+* @Before: O comportamento do aspecto será executado **antes** do método alvo
+* @After: O comportamento do aspecto será executado **depois** do método alvo
+* @AfterThrowing: O comportamento do aspecto será executado somente se o método alvo lançar alguma exceção
+* @Around: O comportamento do aspecto será executado **antes e depois** do método alvo
+
+
+
+### Pointcuts
+
+Os *Pointcuts* dizem quais são os alvos, ou seja, em que métodos do sistema o comportamento do aspecto será executado. Para isso, devemos informar se será aplicado em método publico ou privado, seguido da classe, do método e seus argumentos. Veja o exemplo a seguir:
+
+```
+<?php
+
+	/**
+	 * O método validaAcesso será executado toda vez que o método get da 
+	 * classe Aspecto\Controller\ContatoController for invocado com o parâmetro $id
+	 *
+	 * @Before("execution(public Aspecto\Controller\ContatoController->get($id)")
+	 */
+	public function validaAcesso(MethodInvocation $invocation) {}
+```
+
+Podemos também utilizar o caracter * como coringa, o que nos permitirá aplicar o aspecto em diversas classes e diversos métodos. Aqui é onde as coisas ficam legais, pois é dessa forma que criamos um aspecto de fato na aplicação. São exemplos válidos de pointcuts: 
+
+
+#### Exemplo 1 - Qualquer método público da classe Aspecto\Controller\ContatoController com qualquer parâmetro
+
+```
+<?php
+
+	/**
+	 * @Before("execution(public Aspecto\Controller\ContatoController->*(*)")
+	 */
+	public function validaAcesso(MethodInvocation $invocation) {}
+```
+
+#### Exemplo 2 - Qualquer método público de qualquer classe que estiver dentro do pacote Aspecto\Controller e terminar com Controller
+
+```
+<?php
+
+	/**
+	 * 
+	 * @Before("execution(public Aspecto\Controller\*Controller->*(*)")
+	 */
+	public function validaAcesso(MethodInvocation $invocation) {}
+```
+
+#### Exemplo 3 - Qualquer método da aplicação
+
+```
+<?php
+
+	/**
+	 * 
+	 * @Before("execution(* *->*(*)")
+	 */
+	public function validaAcesso(MethodInvocation $invocation) {}
+```
+
+## Configurando o framework *Go! Aop* na nossa aplicação
+
+
