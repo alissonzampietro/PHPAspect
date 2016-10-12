@@ -278,3 +278,5 @@ Vamos colocar uma chamada da função `sleep()` dentro dos métodos `executa()` 
 		sleep(rand(1, 5));
 	}
 ```
+
+Execute novamente o arquivo index.php e veja 
