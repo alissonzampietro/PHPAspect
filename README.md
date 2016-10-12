@@ -1,6 +1,6 @@
 # PHPAspect
 
-PHPAspect é um tutorial de como utilizar [**AOP (Aspect Oriented Programming ou Programação Orientada à Aspecto)**](https://pt.wikipedia.org/wiki/Programa%C3%A7%C3%A3o_orientada_a_aspecto) em PHP. Ele possui uma implementação simples de um MVC para a gerência de uma agenda de contatos, onde veremos como utilizar a AOP em duas situações: Na primeira, veremos como utilizar AOP para abstrair o sistema de autenticação, e na segunda, deixaremos o gerenciamento de transações das classes de repositório a cargo de uma classe que represente esse aspecto do sistema.
+PHPAspect é um tutorial de como utilizar [**AOP (Aspect Oriented Programming ou Programação Orientada à Aspecto)**](https://pt.wikipedia.org/wiki/Programa%C3%A7%C3%A3o_orientada_a_aspecto) em PHP. Ele possui uma implementação simples de um provilador que registra o tempo de execução de todos os métodos da aplicação.
 
 
 ## Aspect Oriented Programming
@@ -16,7 +16,7 @@ Para conseguirmos trabalhar com o Go! Aop, devemos entender como podemos dizer q
 
 ### Pointcuts
 
-Os *Pointcuts* dizem quais são os alvos, ou seja, em que métodos do sistema o comportamento do aspecto será executado. Para isso, devemos informar se será aplicado em método publico ou privado, seguido da classe, do método e seus argumentos. Veja o exemplo a seguir:
+Os *Pointcuts* informam quem são os alvos, ou seja, em que métodos do sistema o comportamento do aspecto será executado. Para isso, devemos informar se será aplicado em método publico ou privado, seguido da classe, do método e seus argumentos. Veja o exemplo a seguir:
 
 ```
 <?php
@@ -35,7 +35,7 @@ Podemos também utilizar o caracter * como coringa, o que nos permitirá aplicar
 
 ### Advice
 
-Os *Advices* determinam em que momento, durante a execução de um método, o aspecto será invocado. O Go! Aop nos permite fazer isso através de *annotations*. São elas: @Before, @After, @AfterThrowing e @Around. 
+Os *Advices* determinam em que momento da execução do método alvo o aspecto será invocado. O Go! Aop nos permite fazer isso através de *annotations*. São elas: @Before, @After, @AfterThrowing e @Around. 
 
 * @Before: O comportamento do aspecto será executado **antes** do método alvo
 * @After: O comportamento do aspecto será executado **depois** do método alvo
@@ -99,7 +99,7 @@ Crie uma pasta chamada **PHPAspect** e dentro dela e crie um arquivo `composer.j
 }
 ```
 
-Após isso, rode o comando `composer install` para instalar as dependências. Crie uma pasta na raiz do projeto chamada `src` e dentro dela crie um arquivo chamado `ApplicationAspectKernel.php` na raiz do projeto. É este arquivo que irá no permitir integrar os aspectos à nossa aplicação. Iremos criar uma classe que extende de `Go\Core\AspectKernel` e implementa o método `configureAop`. É por meio dele que iremos registrar os aspectos. 
+Após isso, rode o comando `composer install` para instalar as dependências. Crie também uma pasta na raiz do projeto chamada `src` e dentro dela crie um arquivo chamado `ApplicationAspectKernel.php`. É este arquivo que conterá a classe responsável por integrar os aspectos à nossa aplicação. A nossa classe deve extender de `Go\Core\AspectKernel` e implementa o método `configureAop`, que nos permitirá registrar os aspectos. 
 
 ```
 <?php
@@ -146,7 +146,7 @@ $applicationAspectKernel->init(array(
 ));
 ```
 
-Vamos criar duas classes para demonstrar o funcionamento do aspecto. Crie dois arquivos dentro de `src` chamados `ClasseA.php` e `ClaseB.php`, respectivamente. Elas terão apenas um método chamado `executa()` que não receberá nenhum parâmetro.
+Vamos criar duas classes para demonstrar o funcionamento do aspecto, chamadas `ClasseA` e `ClasseB`. Elas terão apenas o `executa()` e não receberá nenhum parâmetro. Crie os arquivos `ClasseA.php` e `ClaseB.php` dentro de `src`:
 
 ```
 // src/ClasseA.php
@@ -170,7 +170,9 @@ class ClasseB {
 
 ```
 
-Com nossas classes criadas, iremos criar nosso primeiro aspecto. Dentro de `src`, crie um arquivo chamado `ProfiladorAspect.php`. Ele conterá a classe responsável imprimir o tempo total de execução de todos os métodos que forem executados. Como esse comportamento é um comportamento é um comportamento de interesse compartilhado, ele será um aspecto da nossa aplicação.
+Para criar nosso aspecto, devemos criar uma classe que implemente a interface `Go\Aop\Aspect`. A partir daí, é possível criar os métodos que serão invocados, e por meio de anotações, informar os pointcuts e advices. 
+
+Vamos criar nosso primeiro aspecto. Ele conterá a classe responsável imprimir o tempo total de execução de todos os métodos que forem executados. Como esse comportamento é um comportamento é um comportamento de interesse compartilhado, ele será um aspecto da nossa aplicação. Dentro de `src`, crie um arquivo chamado `ProfiladorAspect.php`:
 
 ```
 <?php
@@ -221,7 +223,7 @@ class ProfiladorAspect implements Aspect
 
 O método `beforeMethodInvocation` recebe a anotação `@Before` para que seja executado antes do nosso alvo, e `public Aspect\*->(*)` define que nosso alvo é qualquer método de qualquer classe que esteja dentro do pacote `Aspect`. O mesmo ocorre com o método `afterMethodInvocation`, a diferença é que este recebe a annotation `@After`, para que seja executado ao fim do método alvo, nos permitindo obter o tempo total de execução do método.
 
-Agora precisamos registrar o nosso aspecto. Para isso, editaremos a classe `Aspect\ApplicationAspectKernel` e colocaremos uma linha dentro do método `configureAop()`, ficando então desta forma:
+Após criado um aspecto, é necessário registrá-lo. Dessa forma, o Go! Aop passa a saber da sua existência, e pelas anotações identifica os advices e pointcuts do aspecto. Editaremos a classe `Aspect\ApplicationAspectKernel` e colocaremos uma linha dentro do método `configureAop()`, ficando então desta forma:
 
 ```
 <?php
@@ -234,8 +236,7 @@ Agora precisamos registrar o nosso aspecto. Para isso, editaremos a classe `Aspe
 ...
 ```
 
-
-Registrado o nosso aspecto, vamos instanciar as classes `Aspect\ClasseA` e `Aspect\ClasseB` e executar seus métodos `executa()` dentro do arquivo `index.php`. As duas classes não devem saber da existência do aspecto. Portanto, ao executar o método `executa()` de cada classe, os compartamentos contidos dentro do aspecto deverão ser invocados. Insira as linhas a seguir no final do arquivo `index.php`
+Registrado o nosso aspecto, vamos instanciar as classes `Aspect\ClasseA` e `Aspect\ClasseB` e executar seus métodos `executa()` dentro do arquivo `index.php`. Se tudo ocorrer bem, ao executar o método `executa()` de cada classe, os compartamentos contidos dentro do aspecto deverão ser invocados. Insira as linhas a seguir no final do arquivo `index.php`:
 
 ```
 <?php
@@ -276,4 +277,6 @@ Vamos colocar uma chamada da função `sleep()` dentro dos métodos `executa()` 
 	}
 ```
 
-Execute novamente o arquivo index.php e veja 
+Execute novamente o arquivo index.php para ver o novo resultado.
+
+Note que em momento algum a as classes `Aspect\ClasseA` ou `Aspect\ClasseB` tiveram contato com o nosso aspecto. Dessa forma, podemos isolar comportamentos de log de sistema, autenticação e autorização, sistemas transacionais e boa parte da nossa infraestrutura. Um controlador, por exemplo, não precisa saber que ele atende requisições HTTP, podemos deixar a comunicação com HTTP por parte de um aspecto. Basta que os controladores retornem os resultados esperados. O mesmo acontece com gerenciador de rotas. Todos esses exemplos são comportamentos de interesse compartilhado da aplicação e podem ser isolados em aspectos.
