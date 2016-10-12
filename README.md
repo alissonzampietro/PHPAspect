@@ -129,7 +129,7 @@ class ApplicationAspectKernel extends AspectKernel
 }
 ```
 
-Após isso, iremos inicializar o framework no bootstrap a aplicação. Crie um arquivo chamado `index.php` na raiz do projeto com o seguinte conteúdo: 
+Após isso, iremos inicializar o framework no bootstrap da nossa aplicação. Crie um arquivo chamado `index.php` na raiz do projeto com o seguinte conteúdo: 
 
 ```
 <?php
@@ -141,7 +141,7 @@ use Aspect\ApplicationAspectKernel;
 $applicationAspectKernel = ApplicationAspectKernel::getInstance();
 $applicationAspectKernel->init(array(
         'includePaths' => array(
-            __DIR__ . 'src/'
+            __DIR__ . '/src/'
         )
 ));
 ```
@@ -170,33 +170,111 @@ class ClasseB {
 
 ```
 
-Com nossas classes criadas, iremos criar nosso primeiro aspecto. Dentro de `src`, crie um arquivo chamado `ProviladorAspect.php`. Ele conterá a classe responsável por verificar a performance de execução dos métodos. Como esse comportamento é um comportamento de interesse compartilhado, ele será um aspecto da nossa aplicação.
+Com nossas classes criadas, iremos criar nosso primeiro aspecto. Dentro de `src`, crie um arquivo chamado `ProfiladorAspect.php`. Ele conterá a classe responsável imprimir o tempo total de execução de todos os métodos que forem executados. Como esse comportamento é um comportamento é um comportamento de interesse compartilhado, ele será um aspecto da nossa aplicação.
 
 ```
 <?php
 
 namespace Aspect;
 
+use Go\Aop\Aspect;
+use Go\Aop\Intercept\MethodInvocation;
+use Go\Lang\Annotation\Before;
+use Go\Lang\Annotation\After;
+
 class ProfiladorAspect implements Aspect
 {
 
-	/**
-	 *
-	 * @param MethodInvocation $invocation Invocation
-	 * @Before("execution(public *\*->*(*))")
-	 */
-	public function beforeMethodExecution(MethodInvocation $invocation)
-	{
-	}
+    protected $objects = [];
 
-	/**
-	 *
-	 * @param MethodInvocation $invocation Invocation
-	 * @After("execution(public *\*->*(*))")
-	 */
-	public function beforeMethodExecution(MethodInvocation $invocation)
-	{
-	}
+    /**
+     *
+     * @param MethodInvocation $invocation Invocation
+     * @Before("execution(public Aspect\*->*(*))")
+     */
+    public function beforeMethodExecution(MethodInvocation $invocation)
+    {
+    	$obj = $invocation->getThis();
+    	$id = spl_object_hash($obj);
+    	$this->objects[$id] = time();
+    }
+
+    /**
+     *
+     * @param MethodInvocation $invocation Invocation
+     * @After("execution(public Aspect\*->*(*))")
+     */
+    public function afterMethodExecution(MethodInvocation $invocation)
+    {
+    	$obj = $invocation->getThis();
+    	$id = spl_object_hash($obj);
+
+    	$total = time() - $this->objects[$id];
+
+    	$class = get_class($obj);
+    	$method = $invocation->getMethod()->getName();
+
+    	echo "O método {$method} da classe {$class} levou {$total} para ser executado \n";
+    }
 }
+```
+
+O método `beforeMethodInvocation` recebe a anotação `@Before` para que seja executado antes do nosso alvo, e `public Aspect\*->(*)` define que nosso alvo é qualquer método de qualquer classe que esteja dentro do pacote `Aspect`. O mesmo ocorre com o método `afterMethodInvocation`, a diferença é que este recebe a annotation `@After`, para que seja executado ao fim do método alvo, nos permitindo obter o tempo total de execução do método.
+
+Agora precisamos registrar o nosso aspecto. Para isso, editaremos a classe `Aspect\ApplicationAspectKernel` e colocaremos uma linha dentro do método `configureAop()`, ficando então desta forma:
+
+```
+<?php
+
+...
+	protected function configureAop(AspectContainer $container) 
+	{
+		$container->registerAspect(new ProfiladorAspect());
+	}
+...
 
 
+Registrado o nosso aspecto, vamos instanciar as classes `Aspect\ClasseA` e `Aspect\ClasseB` e executar seus métodos `executa()` dentro do arquivo `index.php`. As duas classes não devem saber da existência do aspecto. Portanto, ao executar o método `executa()` de cada classe, os compartamentos contidos dentro do aspecto deverão ser invocados. Insira as linhas a seguir no final do arquivo `index.php`
+
+```
+<?php
+
+...
+$a = new ClasseA();
+$a->executa();
+
+$b = new ClasseB();
+$b->executa();
+```
+
+Com isso, basta executar o arquivo `index.php` que se encontra na raiz do projeto por linha de comando ou rodar um servidor php e veremos a saída do nosso provilador.
+
+#### Linha de comando:
+
+```
+$ php index.php
+```
+
+#### Servidor:
+
+```
+$ php -sS localhost:8080
+```
+
+Deverá ser impresso a seguinte mensagem:
+
+```
+O método executa da classe Aspect\ClasseA levou 0 para ser executado 
+O método executa da classe Aspect\ClasseB levou 0 para ser executado
+```
+
+Vamos colocar uma chamada da função `sleep()` dentro dos métodos `executa()` para ver melhor o seu funcionamento. Insira a seguinte linha nos dois métodos `executa()`:
+
+```
+<?php
+
+...
+	public function executa() {
+		sleep(rand(1, 5));
+	}
+```
