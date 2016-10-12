@@ -237,6 +237,7 @@ Agora precisamos registrar o nosso aspecto. Para isso, editaremos a classe `Aspe
 Registrado o nosso aspecto, vamos instanciar as classes `Aspect\ClasseA` e `Aspect\ClasseB` e executar seus métodos `executa()` dentro do arquivo `index.php`. As duas classes não devem saber da existência do aspecto. Portanto, ao executar o método `executa()` de cada classe, os compartamentos contidos dentro do aspecto deverão ser invocados. Insira as linhas a seguir no final do arquivo `index.php`
 
 ```
+
 <?php
 
 ...
@@ -245,21 +246,19 @@ $a->executa();
 
 $b = new ClasseB();
 $b->executa();
+
+
 ```
 
 Com isso, basta executar o arquivo `index.php` que se encontra na raiz do projeto por linha de comando ou rodar um servidor php e veremos a saída do nosso provilador.
 
 #### Linha de comando:
 
-```
-$ php index.php
-```
+`$ php index.php`
 
 #### Servidor:
 
-```
-$ php -sS localhost:8080
-```
+`$ php -sS localhost:8080`
 
 Deverá ser impresso a seguinte mensagem:
 
