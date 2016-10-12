@@ -83,7 +83,7 @@ Os *Advices* determinam em que momento, durante a execução de um método, o as
 
 ## Instalando e configurando o *Go! Aop*
 
-Crie uma pasta chamada **PHPAspect** e dentro dela e crie um composer.json seguinte conteúdo:
+Crie uma pasta chamada **PHPAspect** e dentro dela e crie um arquivo `composer.json` com o seguinte conteúdo:
 
 ```
 {
@@ -93,10 +93,110 @@ Crie uma pasta chamada **PHPAspect** e dentro dela e crie um composer.json segui
     },
     "autoload": {
     	"psr-4": {
-    		"Aspecto\\": "src/"
+    		"Aspect\\": "src/"
     	}
     }
 }
 ```
 
-Após isso, rode o `composer install` para instalar as nossas dependências.
+Após isso, rode o comando `composer install` para instalar as dependências. Crie uma pasta na raiz do projeto chamada `src` e dentro dela crie um arquivo chamado `ApplicationAspectKernel.php` na raiz do projeto. É este arquivo que irá no permitir integrar os aspectos à nossa aplicação. Iremos criar uma classe que extende de `Go\Core\AspectKernel` e implementa o método `configureAop`. É por meio dele que iremos registrar os aspectos. 
+
+```
+<?php
+// src/ApplicationAspectKernel.php
+
+namespace Aspect;
+
+use Go\Core\AspectKernel;
+use Go\Core\AspectContainer;
+
+/**
+ * Application Aspect Kernel
+ */
+class ApplicationAspectKernel extends AspectKernel
+{
+
+    /**
+     * Configure an AspectContainer with advisors, aspects and pointcuts
+     *
+     * @param AspectContainer $container
+     *
+     * @return void
+     */
+    protected function configureAop(AspectContainer $container)
+    {
+    }
+}
+```
+
+Após isso, iremos inicializar o framework no bootstrap a aplicação. Crie um arquivo chamado `index.php` na raiz do projeto com o seguinte conteúdo: 
+
+```
+<?php
+
+require_once('vendor/autoload.php');
+
+use Aspect\ApplicationAspectKernel;
+
+$applicationAspectKernel = ApplicationAspectKernel::getInstance();
+$applicationAspectKernel->init(array(
+        'includePaths' => array(
+            __DIR__ . 'src/'
+        )
+));
+```
+
+Vamos criar duas classes para demonstrar o funcionamento do aspecto. Crie dois arquivos dentro de `src` chamados `ClasseA.php` e `ClaseB.php`, respectivamente. Elas terão apenas um método chamado `executa()` que não receberá nenhum parâmetro.
+
+```
+// src/ClasseA.php
+
+namepace Aspect;
+
+class ClasseA {
+	public function executa() {}
+}
+
+```
+
+```
+// src/ClasseB.php
+
+namepace Aspect;
+
+class ClasseB {
+	public function executa() {}
+}
+
+```
+
+Com nossas classes criadas, iremos criar nosso primeiro aspecto. Dentro de `src`, crie um arquivo chamado `ProviladorAspect.php`. Ele conterá a classe responsável por verificar a performance de execução dos métodos. Como esse comportamento é um comportamento de interesse compartilhado, ele será um aspecto da nossa aplicação.
+
+```
+<?php
+
+namespace Aspect;
+
+class ProfiladorAspect implements Aspect
+{
+
+	/**
+	 *
+	 * @param MethodInvocation $invocation Invocation
+	 * @Before("execution(public *\*->*(*))")
+	 */
+	public function beforeMethodExecution(MethodInvocation $invocation)
+	{
+	}
+
+	/**
+	 *
+	 * @param MethodInvocation $invocation Invocation
+	 * @After("execution(public *\*->*(*))")
+	 */
+	public function beforeMethodExecution(MethodInvocation $invocation)
+	{
+	}
+}
+
+
