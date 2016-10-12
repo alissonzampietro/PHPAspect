@@ -33,7 +33,7 @@ Os *Pointcuts* informam quem são os alvos, ou seja, em que métodos do sistema 
 Podemos também utilizar o caracter * como coringa, o que nos permitirá aplicar o aspecto em diversas classes e diversos métodos. Aqui é onde as coisas ficam legais, pois é dessa forma que criamos um aspecto de fato na aplicação. 
 
 
-### Advice
+### Advices
 
 Os *Advices* determinam em que momento da execução do método alvo o aspecto será invocado. O Go! Aop nos permite fazer isso através de *annotations*. São elas: @Before, @After, @AfterThrowing e @Around. 
 
